@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LegalEase - Team Viva-Voce Defense Presentation</title>
+    <!-- Reveal.js CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/theme/black.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+    <style>
+        :root {
+            --accent-blue: #38bdf8;
+            --accent-purple: #a855f7;
+            --accent-green: #34d399;
+            --dark-card: rgba(30, 41, 59, 0.7);
+        }
+        .reveal {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #f8fafc;
+            background: linear-gradient(135deg, #090d16 0%, #0f172a 50%, #1e1b4b 100%);
+        }
+        .reveal h1, .reveal h2, .reveal h3 {
+            font-weight: 700;
+            text-transform: none;
+            color: #ffffff;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            margin-bottom: 1rem;
+        }
+        .speaker-tag {
+            font-size: 0.9rem;
+            color: #a855f7;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.2rem;
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+        .card {
+            background: var(--dark-card);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.2rem 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            backdrop-filter: blur(8px);
+        }
+        .card h4 {
+            color: var(--accent-blue);
+            margin-top: 0;
+            font-size: 1.15rem;
+        }
+        .card p, .card ul {
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+            margin-bottom: 0;
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--accent-blue);
+        }
+        pre code {
+            border-radius: 8px;
+            font-size: 0.75rem !important;
+            line-height: 1.4 !important;
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Slide 1: Title Slide -->
+            <section data-auto-animate>
+                <div class="badge">⚖️ FINAL PROJECT DEFENSE</div>
+                <h1 class="gradient-text" style="font-size: 2.8rem; margin-bottom: 0.5rem;">LegalEase</h1>
+                <h3 style="font-size: 1.3rem; color: #94a3b8; font-weight: 400;">AI-Powered Production-Grade Legal Document Generator</h3>
+                <div style="margin-top: 2rem; font-size: 0.9rem; color: #cbd5e1;">
+                    <p><strong>Powered by:</strong> Google Gemini 1.5 Pro | FastAPI | Streamlit | python-docx | fpdf2</p>
+                    <p style="font-size: 0.8rem; color: #64748b; margin-top: 1rem;">Press <strong>Space</strong> or <strong>Right Arrow</strong> to navigate</p>
+                </div>
+                <aside class="notes">
+                    Member 1: Introduce the project and set a confident tone for the evaluators.
+                </aside>
+            </section>
+
+            <!-- Slide 2: Team Members & Contributions -->
+            <section data-auto-animate>
+                <div class="speaker-tag">Member 1 (Team Lead)</div>
+                <h2>👥 Team Roles & Matrix</h2>
+                <div class="card-grid" style="grid-template-columns: repeat(3, 1fr); font-size: 0.75rem;">
+                    <div class="card">
+                        <h4>Member 1: Team Lead</h4>
+                        <p>Architecture, System Orchestration, Presentation Lead</p>
+                    </div>
+                    <div class="card">
+                        <h4>Member 2: AI Engineer</h4>
+                        <p>Gemini 1.5 Pro Prompt Engineering, Parameter Tuning (Temp 0.2)</p>
+                    </div>
+                    <div class="card">
+                        <h4>Member 3: Backend Engineer</h4>
+                        <p>FastAPI REST Service, Pydantic Validation, CORS & Error Handling</p>
+                    </div>
+                    <div class="card">
+                        <h4>Member 4: Frontend Designer</h4>
+                        <p>Streamlit UI, Live In-Browser Editor, Session State Management</p>
+                    </div>
+                    <div class="card">
+                        <h4>Member 5: QA & Exporters</h4>
+                        <p>Headless TXT/DOCX/PDF Exporters, Latin-1 Unicode Sanitizer</p>
+                    </div>
+                    <div class="card" style="background: rgba(56, 189, 248, 0.1);">
+                        <h4 style="color: #38bdf8;">Full Stack Synergy</h4>
+                        <p>End-to-End Automated Testing on Windows & Linux</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 3: Problem Statement -->
+            <section data-auto-animate>
+                <div class="speaker-tag">Member 1 (Team Lead)</div>
+                <h2>❗ The Problem in Legal Drafting</h2>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>🚫 Traditional Bottlenecks</h4>
+                        <ul>
+                            <li>Costly attorney retainers ($300–$800/hr)</li>
+                            <li>Static templates fail to capture nuanced multi-party terms</li>
+                            <li>Turnaround time measured in days/weeks</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>✅ The LegalEase Solution</h4>
+                        <ul>
+                            <li>Instant drafting via Gemini 1.5 Pro in &lt;5 seconds</li>
+                            <li>Context-aware clause generation based on plain-English covenants</li>
+                            <li>One-click exports to TXT, Word (.docx), and PDF</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 4: System Architecture -->
+            <section data-auto-animate>
+                <div class="speaker-tag">Member 1 (Team Lead)</div>
+                <h2>🏛️ System Architecture</h2>
+                <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 1rem; font-family: monospace; font-size: 0.7rem; text-align: left; line-height: 1.4;">
+<pre style="margin: 0; box-shadow: none;"><code>
+ [ Streamlit Frontend (Port 8501) ]
+         │  HTTP POST {"document_type", "parties", "terms", "dates"}
+         ▼
+ [ FastAPI Backend (Uvicorn Port 8000) ]
+         │  Pydantic Validation &amp; Error Boundaries
+         ▼
+ [ AI Core: Gemini 1.5 Pro (GenAI SDK) ] ── (Temp: 0.2, Tokens: 8192)
+         │  8-Tier Structured Contract Drafting
+         ▼
+ [ Headless Exporters: .TXT │ .DOCX │ .PDF (Latin-1 Sanitized) ]
+</code></pre>
+                </div>
+            </section>
+
+            <!-- Slide 5: AI Engine & Prompt Engineering -->
+            <section data-auto-animate>
+                <div class="speaker-tag">Member 2 (AI Engineer)</div>
+                <h2>🧠 Gemini 1.5 Pro AI Engine</h2>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>🎯 Parameter Calibration</h4>
+                        <ul>
+                            <li><strong>Model:</strong> <code>gemini-1.5-pro</code></li>
+                            <li><strong>Temperature = 0.2:</strong> Eliminates hallucinations and enforces deterministic legal phrasing</li>
+                            <li><strong>Max Output Tokens = 8192:</strong> Prevents contract truncation</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>📜 8-Tier Legal Anatomy</h4>
+                        <ol style="font-size: 0.8rem; padding-left: 1.2rem;">
+                            <li>Document Title (Centered Uppercase)</li>
+                            <li>Preamble &amp; Recitals ("WHEREAS...")</li>
+                            <li>Defined Terms</li>
+                            <li>Operative Covenants &amp; Consideration</li>
+                            <li>Term &amp; Termination</li>
+                            <li>Governing Law &amp; Arbitration</li>
+                            <li>Execution &amp; Signature Blocks</li>
+                        </ol>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 6: Backend API & Data Validation -->
+            <section data-auto-animate>
+                <div class="speaker-tag">Member 3 (Backend Engineer)</div>
+                <h2>⚙️ FastAPI Microservice</h2>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>🛡️ Pydantic Validation</h4>
+                        <pre style="margin: 0; box-shadow: none;"><code class="language-python">class DocumentRequest(BaseModel):
+    document_type: str
+    parties: str
+    terms: str
+    dates: str</code></pre>
+                        <p style="margin-top: 0.5rem;">Ensures automatic 422 Unprocessable Entity for invalid input payloads.</p>
+                    </div>
+                    <div class="card">
+                        <h4>⚡ API Features</h4>
+                        <ul>
+                            <li><strong>Asynchronous Routing:</strong> <code>POST /generate</code></li>
+                            <li><strong>CORS Middleware:</strong> Seamless cross-origin support</li>
+                            <li><strong>Interactive Docs:</strong> Swagger UI at <code>/docs</code></li>
+                            <li><strong>Health Check:</strong> <code>GET /</code> status endpoint</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 7: Frontend & Real-Time Editing -->
+            <section data-auto-animate>
+                <div class="speaker-tag">Member 4 (Frontend Designer)</div>
+                <h2>🖥️ Streamlit Interactive UI</h2>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>🎨 Modern UX Aesthetics</h4>
+                        <ul>
+                            <li>Dark navy header gradient (<code>#0f172a</code> to <code>#1e293b</code>)</li>
+                            <li>Custom Scales of Justice branding badge via Pillow</li>
+                            <li>Formatted Legal Preview Container (Times New Roman, 1.7 line height)</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>✏️ Live In-Browser Editor</h4>
+                        <ul>
+                            <li>Persistent state via <code>st.session_state</code></li>
+                            <li>Instant inline editing prior to export</li>
+                            <li>One-click export buttons with loading spinners</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 8: Multi-Format Exporters & Sanitation -->
+            <section data-auto-animate>
+                <div class="speaker-tag">Member 5 (QA & Exporter Engineer)</div>
+                <h2>💾 Multi-Format Headless Exporters</h2>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>📘 Word (.docx) Exporter</h4>
+                        <p>Hierarchical heading mapping, 1.0-inch margins, Times New Roman, and bulleted paragraph formatting via <code>python-docx</code>.</p>
+                    </div>
+                    <div class="card">
+                        <h4>📕 PDF (.pdf) with Latin-1 Fix</h4>
+                        <p>Deterministic <code>sanitize_text_for_pdf()</code> replaces Unicode smart quotes (<code>“ ” ‘ ’</code>), em-dashes (<code>—</code>), and bullets to avoid FPDF encoding crashes.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Slide 9: Test Verification Across 3 Scenarios -->
+            <section data-auto-animate>
+                <div class="speaker-tag">Member 5 (QA & Exporter Engineer)</div>
+                <h2>🧪 Automated Test Results</h2>
+                <div class="card-grid" style="grid-template-columns: repeat(3, 1fr); font-size: 0.8rem;">
+                    <div class="card">
+                        <h4 style="color: #34d399;">Scenario 1: Employment</h4>
+                        <p>Executive contract, 4-yr vesting, 1-yr cliff, IP assignment.<br><strong>Status: 200 OK</strong></p>
+                    </div>
+                    <div class="card">
+                        <h4 style="color: #34d399;">Scenario 2: Freelancer NDA</h4>
+                        <p>2-yr confidentiality, trade secret exclusions, injunctive relief.<br><strong>Status: 200 OK</strong></p>
+                    </div>
+                    <div class="card">
+                        <h4 style="color: #34d399;">Scenario 3: Lease</h4>
+                        <p>Residential lease, escrow deposit, maintenance, WA statute.<br><strong>Status: 200 OK</strong></p>
+                    </div>
+                </div>
+                <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 1rem;">All documents successfully exported to <code>exports/</code> in .txt, .docx, and .pdf.</p>
+            </section>
+
+            <!-- Slide 10: Conclusion & Q&A -->
+            <section data-auto-animate>
+                <div class="badge">🚀 SUBMISSION READY</div>
+                <h2 class="gradient-text">Thank You!</h2>
+                <h3 style="font-size: 1.2rem; color: #94a3b8;">LegalEase: AI-Powered Legal Document Generator</h3>
+                <div style="margin-top: 2rem;">
+                    <p style="font-size: 1.1rem; color: var(--accent-blue);">We now welcome questions from the evaluation panel.</p>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Reveal.js Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/notes/notes.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/highlight/highlight.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            slideNumber: 'c/t',
+            transition: 'slide',
+            plugins: [ RevealHighlight, RevealNotes ]
+        });
+    </script>
+</body>
+</html>

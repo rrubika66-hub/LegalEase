@@ -1,0 +1,54 @@
+# Git repository
+.git
+.gitignore
+
+# Environment & Credentials
+.env
+.env.*
+*.key
+*.pem
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Output test documents & exports
+exports/
+*.pdf
+*.docx
+!PROJECT_REPORT.md
+
+# Operating System files
+.DS_Store
+Thumbs.db
