@@ -1,26 +1,22 @@
-import os
-import sys
-
-# Ensure parent directory is in sys.path when running directly
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.abspath(os.path.join(current_dir, ".."))
-if parent_dir not in sys.path:
-    sys.path.insert(0, parent_dir)
-
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from legalEaseAPI.routes import router as document_router
+import sys
+import os
 
+# Add parent directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from legalEaseAPI.routes import router
+
+# Initialize FastAPI App
 app = FastAPI(
     title="LegalEase AI Legal Document Generator",
-    description="High-performance backend API powering automated, production-grade legal document generation using Gemini 1.5 Pro.",
-    version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    description="Production-ready FastAPI backend powered by Gemini 1.5 Pro to generate legally binding documents.",
+    version="1.0.0"
 )
 
-# Enable CORS for local Streamlit frontend and other clients
+# Enable CORS for frontend clients
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -29,19 +25,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include Document Generation API router
-app.include_router(document_router)
+# Include Document Generation Router
+app.include_router(router)
 
 @app.get("/", tags=["Health Check"])
-async def root_health_check():
+async def root():
     """
     Health check and welcome endpoint.
     """
     return {
-        "status": "online",
-        "service": "LegalEase AI Legal Document Generator",
+        "message": "Welcome to LegalEase AI Legal Document Generator API",
+        "status": "active",
         "version": "1.0.0",
-        "message": "Welcome to the LegalEase API. Visit /docs for interactive API documentation.",
+        "docs_url": "/docs"
     }
 
 if __name__ == "__main__":

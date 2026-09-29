@@ -1,1 +1,4 @@
-"""LegalEase API package initialization."""
+"""
+LegalEase API Package
+FastAPI application routing and initialization.
+"""

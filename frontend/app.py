@@ -1,418 +1,414 @@
-import os
 import io
+import os
+import re
 import requests
 import streamlit as st
-from PIL import Image
 from docx import Document
-from docx.shared import Pt, Inches, RGBColor
+from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from fpdf import FPDF
+from PIL import Image, ImageDraw, ImageFont
 
-# ---------------------------------------------------------
-# Page Configuration & Styling
-# ---------------------------------------------------------
+# Page Configuration
 st.set_page_config(
     page_title="LegalEase",
-    layout="centered",
     page_icon="⚖️",
-    initial_sidebar_state="expanded",
+    layout="centered",
+    initial_sidebar_state="expanded"
 )
 
-# Custom CSS for polished, modern legal aesthetic
-st.markdown(
-    """
-    <style>
-    /* Main container styling */
-    .main .block-container {
-        padding-top: 2rem;
-        padding-bottom: 3rem;
-        max-width: 860px;
+# Custom Styling (Glassmorphism & Professional Legal Aesthetics)
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@400;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
     }
     
-    /* Header card */
-    .legal-header {
+    .main-header {
         text-align: center;
-        padding: 1.5rem 1rem 1rem 1rem;
-        margin-bottom: 1.5rem;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        color: #ffffff;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-    .legal-header h1 {
-        font-size: 2.2rem;
-        font-weight: 700;
-        margin-bottom: 0.2rem;
-        color: #f8fafc;
-    }
-    .legal-header p {
-        font-size: 1rem;
-        color: #94a3b8;
-        margin-bottom: 0;
-    }
-
-    /* Document preview container */
-    .doc-preview-container {
-        background-color: #ffffff;
-        border: 1px solid #cbd5e1;
-        border-radius: 8px;
-        padding: 2.5rem 3rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-        font-family: 'Times New Roman', Times, serif;
-        color: #0f172a;
-        line-height: 1.7;
-        margin: 1.5rem 0;
-    }
-
-    /* Primary button style */
-    .stButton>button[kind="primary"] {
-        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
         color: white;
-        border-radius: 8px;
-        font-weight: 600;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .main-header h1 {
+        font-family: 'Merriweather', serif;
+        font-size: 2.2rem;
+        color: #f8fafc;
+        margin: 0;
+    }
+    
+    .main-header p {
+        color: #94a3b8;
+        font-size: 0.95rem;
+        margin-top: 0.5rem;
+    }
+    
+    .stButton>button {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: white;
         border: none;
-        padding: 0.6rem 1.2rem;
-        transition: all 0.2s ease-in-out;
+        border-radius: 8px;
+        padding: 0.6rem 1.5rem;
+        font-weight: 600;
+        font-size: 1rem;
+        width: 100%;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
     }
-    .stButton>button[kind="primary"]:hover {
-        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    
+    .stButton>button:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
     }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+    
+    .preview-box {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 1.5rem;
+        font-family: 'Merriweather', serif;
+        line-height: 1.8;
+        color: #1e293b;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    
+    .sidebar-info {
+        background-color: #f1f5f9;
+        padding: 1rem;
+        border-radius: 8px;
+        border-left: 4px solid #2563eb;
+        font-size: 0.85rem;
+        color: #334155;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-# ---------------------------------------------------------
-# Document Exporter Utilities
-# ---------------------------------------------------------
-def create_docx(markdown_text: str) -> io.BytesIO:
-    """Generates a professionally formatted Microsoft Word (.docx) document."""
+# Helper: Ensure Logo Exists or Generate Placeholder
+def get_or_create_logo():
+    img_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Image")
+    os.makedirs(img_dir, exist_ok=True)
+    logo_path = os.path.join(img_dir, "logo.png")
+    
+    if not os.path.exists(logo_path):
+        # Create a clean brand badge using PIL
+        img = Image.new("RGBA", (300, 80), color=(15, 23, 42, 255))
+        draw = ImageDraw.Draw(img)
+        # Draw scales symbol & text
+        draw.rectangle([10, 10, 70, 70], fill=(37, 99, 235, 255))
+        draw.text((25, 20), "§", fill=(255, 255, 255, 255))
+        draw.text((85, 25), "LegalEase", fill=(248, 250, 252, 255))
+        img.save(logo_path, "PNG")
+    
+    return logo_path
+
+# Helper: Export to DOCX
+def create_docx(text: str, document_title: str) -> io.BytesIO:
     doc = Document()
-
-    # Standard 1-inch margins
+    
+    # Page Margins
     for section in doc.sections:
         section.top_margin = Inches(1.0)
         section.bottom_margin = Inches(1.0)
         section.left_margin = Inches(1.0)
         section.right_margin = Inches(1.0)
-
-    # Base styling
-    normal_style = doc.styles["Normal"]
-    normal_style.font.name = "Times New Roman"
-    normal_style.font.size = Pt(11)
-    normal_style.font.color.rgb = RGBColor(30, 41, 59)
-
-    for raw_line in markdown_text.split("\n"):
-        line = raw_line.strip()
-        if not line:
+    
+    # Add Title
+    title_p = doc.add_paragraph()
+    title_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    title_run = title_p.add_run(document_title.upper())
+    title_run.font.name = "Times New Roman"
+    title_run.font.size = Pt(16)
+    title_run.font.bold = True
+    title_run.font.color.rgb = RGBColor(0x0F, 0x17, 0x2A)
+    doc.add_paragraph() # Spacer
+    
+    # Process text lines
+    lines = text.split("\n")
+    for line in lines:
+        line_clean = line.strip()
+        if not line_clean:
             continue
-
-        if line.startswith("# "):
-            p = doc.add_heading(line.lstrip("# ").strip(), level=1)
-            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            for run in p.runs:
-                run.font.name = "Times New Roman"
-                run.font.size = Pt(16)
-                run.font.bold = True
-                run.font.color.rgb = RGBColor(15, 23, 42)
-        elif line.startswith("## "):
-            p = doc.add_heading(line.lstrip("# ").strip(), level=2)
-            for run in p.runs:
-                run.font.name = "Times New Roman"
-                run.font.size = Pt(13)
-                run.font.bold = True
-                run.font.color.rgb = RGBColor(30, 41, 59)
-        elif line.startswith("### "):
-            p = doc.add_heading(line.lstrip("# ").strip(), level=3)
-            for run in p.runs:
-                run.font.name = "Times New Roman"
-                run.font.size = Pt(11.5)
-                run.font.bold = True
-                run.font.color.rgb = RGBColor(51, 65, 85)
-        elif line.startswith("- ") or line.startswith("* "):
-            p = doc.add_paragraph(line[2:], style="List Bullet")
-            p.paragraph_format.line_spacing = 1.15
-            p.paragraph_format.space_after = Pt(4)
-        elif (
-            len(line) > 2
-            and line[0].isdigit()
-            and line[1] in [".", ")"]
-        ):
-            p = doc.add_paragraph(line[2:].strip(), style="List Number")
-            p.paragraph_format.line_spacing = 1.15
-            p.paragraph_format.space_after = Pt(4)
+        
+        # Check for headings
+        if line_clean.startswith("###"):
+            h = doc.add_paragraph()
+            r = h.add_run(line_clean.replace("###", "").strip())
+            r.font.name = "Times New Roman"
+            r.font.size = Pt(12)
+            r.font.bold = True
+            h.paragraph_format.space_before = Pt(8)
+            h.paragraph_format.space_after = Pt(4)
+        elif line_clean.startswith("##"):
+            h = doc.add_paragraph()
+            r = h.add_run(line_clean.replace("##", "").strip())
+            r.font.name = "Times New Roman"
+            r.font.size = Pt(13)
+            r.font.bold = True
+            h.paragraph_format.space_before = Pt(12)
+            h.paragraph_format.space_after = Pt(4)
+        elif line_clean.startswith("#"):
+            h = doc.add_paragraph()
+            r = h.add_run(line_clean.replace("#", "").strip())
+            r.font.name = "Times New Roman"
+            r.font.size = Pt(14)
+            r.font.bold = True
+            h.paragraph_format.space_before = Pt(14)
+            h.paragraph_format.space_after = Pt(6)
         else:
-            p = doc.add_paragraph(line)
+            p = doc.add_paragraph()
+            # Remove Markdown bold formatting syntax for clean Word document
+            cleaned_text = re.sub(r'\*\*(.*?)\*\*', r'\1', line_clean)
+            r = p.add_run(cleaned_text)
+            r.font.name = "Times New Roman"
+            r.font.size = Pt(11)
             p.paragraph_format.line_spacing = 1.2
             p.paragraph_format.space_after = Pt(6)
+            
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
 
-    docx_buffer = io.BytesIO()
-    doc.save(docx_buffer)
-    docx_buffer.seek(0)
-    return docx_buffer
-
-
-def sanitize_text_for_pdf(text: str) -> str:
-    """Sanitizes unicode characters to avoid latin-1 encoding errors in standard FPDF."""
+# Helper: Sanitize string for standard PDF encoders
+def sanitize_for_pdf(text: str) -> str:
     replacements = {
-        "\u2018": "'",
-        "\u2019": "'",
-        "\u201c": '"',
-        "\u201d": '"',
-        "\u2014": " - ",
-        "\u2013": " - ",
-        "\u2022": "*",
-        "\u2026": "...",
-        "\u00a0": " ",
-        "\u2122": "(TM)",
-        "\u00ae": "(R)",
-        "\u00a9": "(C)",
-        "§": "Section ",
+        '—': '-', '–': '-', '“': '"', '”': '"', '‘': "'", '’': "'",
+        '…': '...', '•': '*', '§': 'Section ', '©': '(C)', '®': '(R)',
+        '™': '(TM)', '\u200b': '', '\u2013': '-', '\u2014': '-'
     }
-    for orig, repl in replacements.items():
-        text = text.replace(orig, repl)
-    return text.encode("latin-1", "replace").decode("latin-1")
+    for orig, rep in replacements.items():
+        text = text.replace(orig, rep)
+    # Ensure all characters fit standard latin-1 / ascii fallback
+    return text.encode('latin-1', 'replace').decode('latin-1')
 
-
+# Custom PDF Class with Header and Footer
 class LegalPDF(FPDF):
     def header(self):
-        self.set_font("Helvetica", "I", 8)
-        self.set_text_color(148, 163, 184)
-        self.cell(0, 8, "CONFIDENTIAL LEGAL DOCUMENT", border=0, align="R")
-        self.ln(8)
-
+        self.set_font('Helvetica', 'I', 8)
+        self.set_text_color(128, 128, 128)
+        self.cell(0, 6, sanitize_for_pdf('CONFIDENTIAL - LEGAL DOCUMENT'), 0, 0, 'R')
+        self.ln(10)
+        
     def footer(self):
         self.set_y(-15)
-        self.set_font("Helvetica", "I", 8)
-        self.set_text_color(148, 163, 184)
-        page_str = f"Page {self.page_no()}"
-        self.cell(0, 10, page_str, border=0, align="C")
+        self.set_font('Helvetica', 'I', 8)
+        self.set_text_color(128, 128, 128)
+        self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
 
-
-def create_pdf(markdown_text: str) -> io.BytesIO:
-    """Generates a clean, paginated PDF with margins, header, footer, and sanitized text."""
-    pdf = LegalPDF(orientation="P", unit="mm", format="A4")
+# Helper: Export to PDF
+def create_pdf(text: str, document_title: str) -> io.BytesIO:
+    pdf = LegalPDF()
     pdf.set_auto_page_break(auto=True, margin=18)
-    pdf.set_margins(left=20, top=20, right=20)
     pdf.add_page()
-
-    sanitized = sanitize_text_for_pdf(markdown_text)
-    for raw_line in sanitized.split("\n"):
-        line = raw_line.strip()
-        if not line:
+    
+    # Document Title
+    pdf.set_font("Helvetica", 'B', 15)
+    pdf.set_text_color(15, 23, 42)
+    sanitized_title = sanitize_for_pdf(document_title.upper())
+    pdf.cell(0, 10, sanitized_title, ln=True, align='C')
+    pdf.ln(5)
+    
+    lines = text.split("\n")
+    for line in lines:
+        line_clean = line.strip()
+        if not line_clean:
             pdf.ln(3)
             continue
-
-        if line.startswith("# "):
-            pdf.set_font("Helvetica", "B", 14)
+            
+        if line_clean.startswith("###"):
+            pdf.set_font("Helvetica", 'B', 11)
+            pdf.set_text_color(30, 41, 59)
+            heading_txt = sanitize_for_pdf(line_clean.replace("###", "").strip())
+            pdf.ln(2)
+            pdf.multi_cell(0, 6, heading_txt)
+            pdf.ln(1)
+        elif line_clean.startswith("##") or line_clean.startswith("#"):
+            pdf.set_font("Helvetica", 'B', 12)
             pdf.set_text_color(15, 23, 42)
-            pdf.multi_cell(0, 7, line.lstrip("# ").strip(), align="C")
-            pdf.ln(3)
-        elif line.startswith("## "):
-            pdf.set_font("Helvetica", "B", 11)
-            pdf.set_text_color(30, 41, 59)
-            pdf.multi_cell(0, 6, line.lstrip("# ").strip(), align="L")
+            heading_txt = sanitize_for_pdf(line_clean.lstrip("#").strip())
+            pdf.ln(4)
+            pdf.multi_cell(0, 7, heading_txt)
             pdf.ln(2)
-        elif line.startswith("### "):
-            pdf.set_font("Helvetica", "B", 10)
-            pdf.set_text_color(51, 65, 85)
-            pdf.multi_cell(0, 5, line.lstrip("# ").strip(), align="L")
-            pdf.ln(1)
-        elif line.startswith(("- ", "* ")):
-            pdf.set_font("Helvetica", "", 10)
-            pdf.set_text_color(30, 41, 59)
-            pdf.multi_cell(0, 5, f"  * {line[2:]}", align="L")
-            pdf.ln(1)
         else:
-            pdf.set_font("Helvetica", "", 10)
+            pdf.set_font("Helvetica", '', 10)
             pdf.set_text_color(30, 41, 59)
-            pdf.multi_cell(0, 5, line, align="L")
-            pdf.ln(2)
-
-    pdf_buffer = io.BytesIO()
-    pdf_bytes = pdf.output()
-    if isinstance(pdf_bytes, str):
-        pdf_buffer.write(pdf_bytes.encode("latin-1"))
-    elif isinstance(pdf_bytes, (bytes, bytearray)):
-        pdf_buffer.write(pdf_bytes)
-    pdf_buffer.seek(0)
-    return pdf_buffer
+            cleaned_text = re.sub(r'\*\*(.*?)\*\*', r'\1', line_clean)
+            sanitized_body = sanitize_for_pdf(cleaned_text)
+            pdf.multi_cell(0, 5.5, sanitized_body)
+            pdf.ln(1.5)
+            
+    buffer = io.BytesIO()
+    pdf.output(buffer)
+    buffer.seek(0)
+    return buffer
 
 
-# ---------------------------------------------------------
-# UI Header & Logo
-# ---------------------------------------------------------
-logo_path = os.path.join(os.path.dirname(__file__), "..", "Image", "logo.png")
-if os.path.exists(logo_path):
-    try:
-        logo_img = Image.open(logo_path)
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.image(logo_img, use_container_width=True)
-    except Exception:
-        pass
+# Main Application Interface
+def main():
+    # Sidebar
+    with st.sidebar:
+        logo_path = get_or_create_logo()
+        if os.path.exists(logo_path):
+            st.image(logo_path, use_column_width=True)
+            
+        st.markdown("### ⚖️ About LegalEase")
+        st.markdown(
+            "LegalEase is an AI-powered legal document generation platform "
+            "designed to draft contract agreements, NDAs, service pacts, and "
+            "custom legal instruments instantly."
+        )
+        st.markdown("---")
+        st.markdown("""
+        <div class="sidebar-info">
+            <strong>Supported Document Types:</strong><br/>
+            • Non-Disclosure Agreement (NDA)<br/>
+            • Employment Agreement<br/>
+            • Independent Contractor Contract<br/>
+            • Commercial Lease Agreement<br/>
+            • Software Service Agreement (SaaS)<br/>
+            • Partnership Agreement
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown("---")
+        api_url = st.text_input("Backend API Endpoint", value="http://localhost:8000")
 
-st.markdown(
-    """
-    <div class="legal-header">
-        <h1>⚖️ LegalEase</h1>
-        <p>AI-Powered Production-Grade Legal Document Generator</p>
+    # Main Header
+    st.markdown("""
+    <div class="main-header">
+        <h1>⚖️ LegalEase AI</h1>
+        <p>Intelligent Legal Contract & Document Drafting Engine</p>
     </div>
-    """,
-    unsafe_allow_html=True,
-)
+    """, unsafe_allow_html=True)
 
-# ---------------------------------------------------------
-# Sidebar Configuration
-# ---------------------------------------------------------
-with st.sidebar:
-    st.header("⚙️ Settings")
-    default_backend_url = os.getenv("BACKEND_API_URL", "http://localhost:8000/generate")
-    api_url = st.text_input("Backend API URL", value=default_backend_url)
-    st.markdown("---")
-    st.markdown("### 💡 Tips for Best Results")
-    st.markdown(
-        """
-        - **Parties**: Include full legal names, jurisdiction of formation, or residential addresses.
-        - **Terms**: Separate distinct covenants with semicolons.
-        - **Dates**: Clearly specify effective dates and milestone periods.
-        """
-    )
+    # Document Inputs Form
+    with st.container():
+        st.subheader("📋 Document Specifications")
+        
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            document_type = st.text_input(
+                "Document Type *",
+                placeholder="e.g. Non-Disclosure Agreement (NDA)",
+                help="Type or select the legal agreement category."
+            )
+        with col2:
+            dates = st.text_input(
+                "Effective Date & Timeline *",
+                placeholder="e.g. Effective October 1, 2024 for a duration of 2 years",
+                help="Specify key dates, term lengths, or milestone timelines."
+            )
+            
+        parties = st.text_area(
+            "Parties Involved *",
+            placeholder="e.g. Party A (Disclosing Party): Apex Innovations Inc., 100 Silicon Ave;\nParty B (Receiving Party): Jane Doe, Consultant, 456 Oak Lane",
+            help="List all participating individuals or legal entities with designations and addresses."
+        )
+        
+        terms = st.text_area(
+            "Terms & Conditions (semicolon-separated) *",
+            placeholder="e.g. Confidentiality duration 24 months; Governing law of Delaware; Non-solicitation of employees; Liquidated damages of $50,000 for breach",
+            help="Detail the key terms, covenants, payments, restrictions, and governing clauses."
+        )
+        
+        generate_btn = st.button("⚡ Generate Document", use_container_width=True)
 
-# ---------------------------------------------------------
-# Document Generation Form
-# ---------------------------------------------------------
-st.subheader("📝 Document Specifications")
+    # Session State Initialization for Persistence
+    if "generated_doc" not in st.session_state:
+        st.session_state.generated_doc = ""
+    if "current_doc_type" not in st.session_state:
+        st.session_state.current_doc_type = "Legal_Document"
 
-with st.form(key="document_generation_form"):
-    doc_type = st.text_input(
-        "Document Type *",
-        placeholder="e.g. Non-Disclosure Agreement (NDA), Employment Agreement, Commercial Lease",
-        help="Specify the legal contract type you want drafted.",
-    )
+    # Handle Generation
+    if generate_btn:
+        if not document_type or not parties or not terms or not dates:
+            st.error("⚠️ Please fill in all required fields to draft the legal document.")
+        else:
+            with st.spinner("⚖️ Consulting Gemini 1.5 Pro legal intelligence..."):
+                payload = {
+                    "document_type": document_type,
+                    "parties": parties,
+                    "terms": terms,
+                    "dates": dates
+                }
+                try:
+                    res = requests.post(f"{api_url.rstrip('/')}/generate", json=payload, timeout=90)
+                    if res.status_code == 200:
+                        doc_text = res.json().get("document", "")
+                        st.session_state.generated_doc = doc_text
+                        st.session_state.current_doc_type = document_type
+                        st.success("✅ Legal document successfully generated!")
+                    else:
+                        detail = res.json().get("detail", res.text)
+                        st.error(f"❌ API Error ({res.status_code}): {detail}")
+                except requests.exceptions.ConnectionError:
+                    st.error(f"❌ Could not reach the backend server at `{api_url}`. Please ensure FastAPI is running via `run.sh` or `uvicorn`.")
+                except Exception as ex:
+                    st.error(f"❌ An error occurred: {str(ex)}")
 
-    parties = st.text_area(
-        "Parties Involved *",
-        placeholder="Party A (Discloser): NexaTech Solutions Inc., a Delaware corporation\nParty B (Recipient): Johnathan Davis, an individual residing in New York",
-        height=100,
-        help="List all participating parties with their legal statuses.",
-    )
-
-    terms = st.text_area(
-        "Terms & Conditions (semicolon-separated) *",
-        placeholder="Term of confidentiality shall be 3 years; Return of all confidential materials within 14 days of termination; Mutual non-solicitation of employees for 12 months; Governing law State of New York; Dispute resolution via binding AAA arbitration in NYC.",
-        height=140,
-        help="Enter the operative clauses, covenants, and conditions.",
-    )
-
-    dates = st.text_input(
-        "Effective Date & Key Dates *",
-        placeholder="Effective as of October 1, 2026; Termination date December 31, 2027",
-        help="Provide effective dates, termination dates, or milestone timelines.",
-    )
-
-    submit_button = st.form_submit_button(label="🚀 Generate Document", type="primary")
-
-# Initialize session state for document persistence
-if "generated_doc" not in st.session_state:
-    st.session_state.generated_doc = ""
-if "doc_type_saved" not in st.session_state:
-    st.session_state.doc_type_saved = "Legal_Document"
-
-if submit_button:
-    if not doc_type.strip() or not parties.strip() or not terms.strip() or not dates.strip():
-        st.error("⚠️ Please fill in all required fields marked with * before submitting.")
-    else:
-        payload = {
-            "document_type": doc_type.strip(),
-            "parties": parties.strip(),
-            "terms": terms.strip(),
-            "dates": dates.strip(),
-        }
-
-        with st.spinner("⚖️ Consulting Gemini 1.5 Pro legal drafting engine... Please wait."):
+    # Display & Export Section
+    if st.session_state.generated_doc:
+        st.markdown("---")
+        st.subheader("📄 Generated Document Preview & Inline Editor")
+        
+        # Inline Editable Text Area
+        edited_doc = st.text_area(
+            "Modify or refine the text before exporting:",
+            value=st.session_state.generated_doc,
+            height=350
+        )
+        
+        # Format filename
+        file_prefix = re.sub(r'[^a-zA-Z0-9]', '_', st.session_state.current_doc_type).strip('_') or "Legal_Agreement"
+        
+        st.markdown("### 📥 Export Options")
+        col_txt, col_docx, col_pdf = st.columns(3)
+        
+        # 1. TXT Download
+        with col_txt:
+            st.download_button(
+                label="📄 Download .TXT",
+                data=edited_doc.encode('utf-8'),
+                file_name=f"{file_prefix}.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
+            
+        # 2. DOCX Download
+        with col_docx:
             try:
-                response = requests.post(api_url, json=payload, timeout=90)
-                if response.status_code == 200:
-                    result_data = response.json()
-                    st.session_state.generated_doc = result_data.get("document", "")
-                    st.session_state.doc_type_saved = doc_type.strip().replace(" ", "_")
-                    st.success("✅ Legal document successfully generated!")
-                else:
-                    detail = response.json().get("detail", response.text)
-                    st.error(f"❌ Generation failed ({response.status_code}): {detail}")
-            except requests.exceptions.ConnectionError:
-                st.error(
-                    f"❌ Unable to connect to backend at `{api_url}`. "
-                    "Make sure the FastAPI server is running (`uvicorn legalEaseAPI.main:app --port 8000`)."
+                docx_buffer = create_docx(edited_doc, st.session_state.current_doc_type)
+                st.download_button(
+                    label="📝 Download .DOCX",
+                    data=docx_buffer,
+                    file_name=f"{file_prefix}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True
                 )
             except Exception as e:
-                st.error(f"❌ An unexpected error occurred: {str(e)}")
+                st.warning(f"DOCX preparation error: {e}")
+                
+        # 3. PDF Download
+        with col_pdf:
+            try:
+                pdf_buffer = create_pdf(edited_doc, st.session_state.current_doc_type)
+                st.download_button(
+                    label="📑 Download .PDF",
+                    data=pdf_buffer,
+                    file_name=f"{file_prefix}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
+            except Exception as e:
+                st.warning(f"PDF preparation error: {e}")
 
-# ---------------------------------------------------------
-# Dynamic Preview, Inline Editing & Exporters
-# ---------------------------------------------------------
-if st.session_state.generated_doc:
-    st.markdown("---")
-    st.subheader("📄 Generated Document Preview & Inline Editor")
-    st.caption("You can modify the document directly below before exporting to your preferred format.")
-
-    # Inline Editor
-    edited_doc = st.text_area(
-        label="Edit Document Content",
-        value=st.session_state.generated_doc,
-        height=450,
-        key="doc_editor",
-    )
-    st.session_state.generated_doc = edited_doc
-
-    # Styled Formatted Preview Expandable
-    with st.expander("👁️ View Formatted Markdown Preview", expanded=False):
-        st.markdown(
-            f'<div class="doc-preview-container">{st.session_state.generated_doc}</div>',
-            unsafe_allow_html=True,
-        )
-
-    # Exporters / Download Buttons
-    st.markdown("### 💾 Export & Download")
-    col1, col2, col3 = st.columns(3)
-    file_base_name = f"{st.session_state.doc_type_saved}_Draft"
-
-    with col1:
-        # 1. Plain Text (.txt) Download
-        st.download_button(
-            label="📄 Download .TXT",
-            data=st.session_state.generated_doc.encode("utf-8"),
-            file_name=f"{file_base_name}.txt",
-            mime="text/plain",
-            use_container_width=True,
-        )
-
-    with col2:
-        # 2. Microsoft Word (.docx) Download
-        try:
-            docx_data = create_docx(st.session_state.generated_doc)
-            st.download_button(
-                label="📘 Download .DOCX",
-                data=docx_data,
-                file_name=f"{file_base_name}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True,
-            )
-        except Exception as docx_err:
-            st.error(f"Error preparing DOCX: {docx_err}")
-
-    with col3:
-        # 3. PDF (.pdf) Download
-        try:
-            pdf_data = create_pdf(st.session_state.generated_doc)
-            st.download_button(
-                label="📕 Download .PDF",
-                data=pdf_data,
-                file_name=f"{file_base_name}.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-            )
-        except Exception as pdf_err:
-            st.error(f"Error preparing PDF: {pdf_err}")
+if __name__ == "__main__":
+    main()

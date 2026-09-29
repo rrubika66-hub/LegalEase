@@ -1,87 +1,93 @@
 import os
-import google.generativeai as genai
 from dotenv import load_dotenv
+import google.generativeai as genai
 
+# Load environment variables from .env file
 load_dotenv()
 
 class GeminiDocumentGenerator:
     """
-    Core AI document generation engine utilizing Google Gemini 1.5 Pro
-    to produce legally structured, comprehensive, and tailored legal agreements.
+    Core document generator powered by Google Gemini 1.5 Pro.
+    Generates legally binding, structured legal agreements.
     """
 
-    def __init__(self, api_key: str = None, model_name: str = "gemini-1.5-pro"):
+    def __init__(self, api_key: str = None):
+        # Retrieve API key from parameter or environment
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not self.api_key or self.api_key == "your_gemini_api_key_here":
             raise ValueError(
-                "GEMINI_API_KEY is not configured. Please provide a valid Gemini API key in your .env file or environment."
+                "GEMINI_API_KEY is not set or is using the placeholder. "
+                "Please configure your valid API key in the .env file."
             )
         
+        # Configure the Google Generative AI SDK
         genai.configure(api_key=self.api_key)
-        self.model_name = model_name
+        
+        # Generation configuration for high precision legal text
+        self.generation_config = {
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "top_k": 40,
+            "max_output_tokens": 8192,
+        }
+        
+        # Safety settings for legal document drafting
+        self.safety_settings = [
+            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+        ]
+        
+        # Initialize Gemini 1.5 Pro model
         self.model = genai.GenerativeModel(
-            model_name=self.model_name,
-            generation_config={
-                "temperature": 0.2,
-                "top_p": 0.95,
-                "top_k": 40,
-                "max_output_tokens": 8192,
-            },
+            model_name="gemini-1.5-pro",
+            generation_config=self.generation_config,
+            safety_settings=self.safety_settings
         )
 
-    def generate_document(
-        self,
-        document_type: str,
-        parties: str,
-        terms: str,
-        dates: str,
-    ) -> str:
+    def generate_document(self, document_type: str, parties: str, terms: str, dates: str) -> str:
         """
-        Drafts a legally binding, comprehensive legal document based on provided inputs.
+        Drafts a comprehensive, formal legal document based on user inputs.
 
-        Args:
-            document_type: Type of document (e.g. Non-Disclosure Agreement, Employment Contract)
-            parties: Descriptions/names of the participating parties and their legal standing
-            terms: Key terms, stipulations, and conditions (can be semicolon-separated or bulleted)
-            dates: Effective date, termination date, or relevant timeline
-
-        Returns:
-            str: Raw markdown-formatted legal document ready for rendering and export.
+        :param document_type: The type of legal document (e.g., NDA, Employment Contract, Lease Agreement).
+        :param parties: Description of all involved parties and their legal designations.
+        :param terms: Core terms, conditions, obligations, and covenants (semicolon-separated or free text).
+        :param dates: Effective date, duration, expiration, or milestones.
+        :return: Raw formatted markdown text of the complete legal document.
         """
-        prompt = f"""
-You are a senior corporate attorney and master legal draftsman. Your task is to draft a formal, legally binding, comprehensive, and enforceable {document_type}.
+        system_prompt = f"""You are a senior legal counsel and professional contract drafting attorney. 
+Draft a complete, formal, legally binding, and comprehensive legal document based on the following specifications:
 
-### INSTRUCTIONS:
-1. Use standard, professional legal phrasing and formal legal terminology.
-2. Structure the contract with standard legal sections:
-   - **TITLE**: Centered and clear document title in uppercase.
-   - **PREAMBLE & RECITALS**: Formal identification of the parties, their respective roles, effective date, and recitals stating the background intent ("WHEREAS...").
-   - **DEFINED TERMS**: Clear definitions for capitalized key terms used in the contract.
-   - **OPERATIVE COVENANTS & OBLIGATIONS**: Detailed clauses based on the supplied terms. Expand and formalize each term into standard, highly protective legal clauses.
-   - **CONSIDERATION & PAYMENT / PERFORMANCE**: Terms of compensation, performance, or exchange of value if applicable.
-   - **CONFIDENTIALITY & INTELLECTUAL PROPERTY**: Robust confidentiality provisions and IP assignment/protection where applicable.
-   - **TERM & TERMINATION**: Duration, termination for convenience, termination for cause, notice periods, and post-termination survival clauses.
-   - **REPRESENTATIONS & WARRANTIES**: Standard mutual representations.
-   - **INDEMNIFICATION & LIMITATION OF LIABILITY**: Standard liability caps and indemnification scope.
-   - **DISPUTE RESOLUTION & GOVERNING LAW**: Choice of law, jurisdiction, and mediation/arbitration provisions.
-   - **MISCELLANEOUS / BOILERPLATE**: Severability, Entire Agreement, Amendments, Waivers, Force Majeure, and Notices.
-   - **SIGNATURE BLOCKS**: Formal execution blocks for each party with lines for Signature, Printed Name, Title, and Date.
+Document Type: {document_type}
+Parties Involved: {parties}
+Key Terms & Conditions: {terms}
+Effective Date & Timeline: {dates}
 
-### INPUT DETAILS:
-- **Document Type**: {document_type}
-- **Parties Involved**: {parties}
-- **Terms & Conditions**: {terms}
-- **Effective Date & Timelines**: {dates}
+Drafting Requirements:
+1. Format with professional legal structure using clear Markdown headings (e.g., # TITLE, ## Section Name):
+   - TITLE OF THE AGREEMENT (in all caps, centered style)
+   - PREAMBLE & RECITALS (e.g., "This Agreement is entered into on...", "WHEREAS...")
+   - DEFINED TERMS / DEFINITIONS
+   - OPERATIVE CLAUSES / RIGHTS AND OBLIGATIONS (detailed, standard legal boilerplate tailored to the specific type)
+   - CONSIDERATION & PAYMENT (if applicable)
+   - CONFIDENTIALITY, REPRESENTATIONS & WARRANTIES
+   - TERM, TERMINATION & DEFAULT
+   - INDEMNIFICATION & LIMITATION OF LIABILITY
+   - DISPUTE RESOLUTION & GOVERNING LAW / JURISDICTION
+   - MISCELLANEOUS / GENERAL PROVISIONS (Severability, Entire Agreement, Amendments, Counterparts)
+   - SIGNATURE BLOCKS (Formal signature spaces for all named parties, including Name, Title, Company, Date, and Signature lines).
 
-### FORMATTING:
-- Deliver ONLY the drafted legal document formatted in clean, professional Markdown.
-- Use clear numbered section headings (e.g., `1. DEFINITIONS`, `2. OBLIGATIONS OF THE PARTIES`).
-- Do not include conversational conversational chatter or meta-commentary before or after the document text.
+2. Use precise legal terminology (e.g., "shall", "covenants", "indemnify and hold harmless").
+3. Ensure no placeholder brackets like "[Insert Date Here]" remain unfilled if the information is provided in the inputs.
+4. Provide the complete text in clean, professional markdown format ready for export.
 """
+
         try:
-            response = self.model.generate_content(prompt)
-            if not response or not response.text:
-                raise RuntimeError("Empty response received from the Gemini model.")
-            return response.text.strip()
+            response = self.model.generate_content(system_prompt)
+            if response and response.text:
+                return response.text
+            else:
+                raise RuntimeError("Empty response received from Gemini model.")
         except Exception as e:
-            raise RuntimeError(f"Gemini document generation failed: {str(e)}") from e
+            raise RuntimeError(f"Error generating document with Gemini AI: {str(e)}")
